@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import PlainTextResponse
 from fastapi.openapi.utils import get_openapi
@@ -8,9 +9,9 @@ from fastapi.staticfiles import StaticFiles
 from routers import ip, qrcode, bilibili, youdaolittlep
 from routers.text2img import router as text2img_router
 
-EXPECTED_TOKEN = os.environ.get("OPENAPI_TOKEN", "")
+EXPECTED_TOKEN = os.environ.get("FASTAPI_DOCS_TOKEN", "")
 if not EXPECTED_TOKEN:
-    raise RuntimeError("Environment variable OPENAPI_TOKEN is not set. Startup aborted.")
+    raise RuntimeError("Environment variable FASTAPI_DOCS_TOKEN is not set. Startup aborted.")
 
 api_key_query = APIKeyQuery(name="token", auto_error=False)
 
@@ -20,7 +21,12 @@ async def verify_api_token(token: str = Depends(api_key_query)):
     if token != EXPECTED_TOKEN:
         raise HTTPException(status_code=403, detail=f"Authentication Fails, Your token: {token} is invalid")
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app.title = "Docs"
 
 @app.get("/openapi.json", include_in_schema=False)
 async def openapi_json(valid: bool = Depends(verify_api_token)):
@@ -39,7 +45,7 @@ async def swagger_ui(
 ):
     return get_swagger_ui_html(
         openapi_url=f"/openapi.json?token={token}",
-        title=app.title + " - Swagger UI"
+        title="Docs"
     )
 
 @app.get("/redoc", include_in_schema=False)
@@ -49,7 +55,7 @@ async def redoc_ui(
 ):
     return get_redoc_html(
         openapi_url=f"/openapi.json?token={token}",
-        title=app.title + " - ReDoc"
+        title="Redoc"
     )
 
 app.include_router(ip.router)
