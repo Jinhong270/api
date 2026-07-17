@@ -28,9 +28,7 @@ async def verify_api_token(token: str = Depends(api_key_query)):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    get_global_manager()
     yield
-    shutdown_global_manager()
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 app.title = "Docs"
@@ -84,7 +82,7 @@ async def status():
 async def robots_txt():
     return FileResponse(os.path.join(BASE_DIR, "robots.txt"))
 
-app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/snake"), html=True), name="snake")
+app.mount("/snake", StaticFiles(directory=os.path.join(BASE_DIR, "static/Snake"), html=True), name="Snake")
 app.mount("/2048", StaticFiles(directory=os.path.join(BASE_DIR, "static/2048"), html=True), name="2048")
 
 if __name__ == "__main__":
