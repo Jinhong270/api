@@ -2,17 +2,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-}
-
-.score-box {
-    background: #bbada0;
-    color: white;
-    padding: 10px 30px;
-    border-radius: 30px;
-    font-size: 22px;
-    font-weight: bold;
-    text-align: center;
+    justify-content: center;
 }
 
 .dpad {
@@ -29,8 +19,8 @@
     height: 70px;
     border: none;
     border-radius: 14px;
-    background: #8f7a66;
-    color: white;
+    background: var(--color-accent);
+    color: var(--color-text-light);
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
@@ -38,34 +28,22 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-lift);
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.btn:hover {
+    background: var(--color-accent-hover);
 }
 
 .btn:active {
     transform: scale(0.92);
-    background: #9e8b77;
+    background: var(--color-accent-hover);
 }
 
 .btn-up    { grid-area: up; }
 .btn-down  { grid-area: down; }
 .btn-left  { grid-area: left; }
 .btn-right { grid-area: right; }
-
-.reset-btn {
-    background: #8f7a66;
-    color: white;
-    padding: 12px 28px;
-    border: none;
-    border-radius: 30px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: background 0.2s, transform 0.1s;
-}
-
-.reset-btn:active {
-    transform: scale(0.95);
-    background: #9e8b77;
-}

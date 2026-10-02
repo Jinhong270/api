@@ -112,7 +112,7 @@ Powered by Jinhong270
       ]
     },
     {
-      "path": "/bilibili/video/{aid}",
+      "path": "/bilibili/video/aid/{aid}",
       "method": "GET",
       "description": "Get video info by AID",
       "params": [
@@ -376,6 +376,12 @@ Powered by Jinhong270
       "path": "/2048",
       "method": "GET",
       "description": "2048 game - HTML interface"
+    },
+    {
+      "path": "/tetris",
+      "method": "GET",
+      "description": "Tetris game - HTML interface"
     }
   ]
 }
+

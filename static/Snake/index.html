@@ -1,76 +1,89 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en-US">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#081310">
-<title>贪吃蛇 · Jinhong270</title>
+<meta name="theme-color" content="#070f0c">
+<title>Snake · Jinhong270</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
   <header class="app-header">
-    <h1 class="app-title">贪吃蛇</h1>
-    <div class="score-panel">
-      <div class="score-chip">
-        <span class="score-chip-label">分数</span>
-        <span class="score-chip-value" id="currentScore">0</span>
+    <h1 class="app-title" id="appTitle" data-i18n="title">Snake</h1>
+    <div class="header-actions">
+      <div class="score-panel">
+        <div class="score-chip">
+          <span class="score-chip-label" id="scoreLabel" data-i18n="score">Score</span>
+          <span class="score-chip-value" id="currentScore">0</span>
+        </div>
+        <div class="score-chip score-chip-best">
+          <span class="score-chip-label" id="bestLabel" data-i18n="best">Best</span>
+          <span class="score-chip-value" id="bestScore">0</span>
+        </div>
       </div>
-      <div class="score-chip score-chip-best">
-        <span class="score-chip-label">最高分</span>
-        <span class="score-chip-value" id="bestScore">0</span>
-      </div>
+      <button class="icon-btn" id="fullscreenBtn" type="button" hidden data-i18n-aria="fullscreen" aria-label="Full screen">
+        <svg class="icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+        <svg class="icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M16 3v3a2 2 0 0 0 2 2h3M8 21v-3a2 2 0 0 0-2-2H3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+      </button>
     </div>
   </header>
 
-  <main class="app-main">
+  <div class="workspace">
     <div class="stage" id="stage">
-      <div class="canvas-frame" id="canvasFrame">
-        <canvas id="gameCanvas"></canvas>
+      <div class="board-slot" id="boardSlot">
+        <div class="canvas-frame" id="canvasFrame">
+          <canvas id="gameCanvas"></canvas>
 
-        <div class="overlay" id="overlayIdle">
-          <button class="play-button" id="startBtn">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            <span>开始游戏</span>
-          </button>
-          <p class="overlay-hint">点击画布或按空格键开始</p>
+          <div class="overlay visible" id="overlayIdle">
+            <button class="play-button" id="startBtn" type="button">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              <span data-i18n="start">Start</span>
+            </button>
+            <p class="overlay-hint" id="idleHint">Click the board or press Space</p>
+          </div>
+
+          <div class="overlay" id="overlayPaused">
+            <div class="pause-glyph" aria-hidden="true"><span></span><span></span></div>
+            <p class="overlay-title" id="pausedTitle" data-i18n="paused">Paused</p>
+            <p class="overlay-hint" id="pausedHint">Click the board or press Space to continue</p>
+          </div>
+
+          <div class="overlay" id="overlayGameOver">
+            <p class="overlay-title" id="gameOverTitle" data-i18n="gameOver">Game over</p>
+            <p class="overlay-score"><span class="overlay-score-label" id="finalScoreLabel" data-i18n="scoreWord">Score</span> <span id="finalScore">0</span></p>
+            <span class="new-best-badge" id="newBestBadge" data-i18n="newRecord">New record</span>
+            <button class="restart-button" id="restartFromOverBtn" type="button" data-i18n="playAgain">Play again</button>
+          </div>
+
+          <div class="toast" id="toast"></div>
         </div>
-
-        <div class="overlay" id="overlayPaused">
-          <div class="pause-glyph"><span></span><span></span></div>
-          <p class="overlay-title">已暂停</p>
-          <p class="overlay-hint">点击画布或按空格键继续</p>
-        </div>
-
-        <div class="overlay" id="overlayGameOver">
-          <p class="overlay-title">游戏结束</p>
-          <p class="overlay-score">得分 <span id="finalScore">0</span></p>
-          <span class="new-best-badge" id="newBestBadge">新纪录</span>
-          <button class="restart-button" id="restartFromOverBtn">再来一局</button>
-        </div>
-
-        <div class="toast" id="toast"></div>
       </div>
 
       <div class="dpad" id="dpad">
-        <button class="dpad-btn dpad-up" data-dir="up" aria-label="向上">
+        <button class="dpad-btn dpad-up" type="button" data-dir="up" data-i18n-aria="up" aria-label="Up">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
         </button>
-        <button class="dpad-btn dpad-left" data-dir="left" aria-label="向左">
+        <button class="dpad-btn dpad-left" type="button" data-dir="left" data-i18n-aria="left" aria-label="Left">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
         </button>
-        <button class="dpad-btn dpad-right" data-dir="right" aria-label="向右">
+        <button class="dpad-btn dpad-center" id="dpadCenter" type="button" aria-label="Start">
+          <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>
+        </button>
+        <button class="dpad-btn dpad-right" type="button" data-dir="right" data-i18n-aria="right" aria-label="Right">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
         </button>
-        <button class="dpad-btn dpad-down" data-dir="down" aria-label="向下">
+        <button class="dpad-btn dpad-down" type="button" data-dir="down" data-i18n-aria="down" aria-label="Down">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 8.8V19h-2V8.8l-4.6 4.6L5 12z"/></svg>
         </button>
       </div>
@@ -78,45 +91,115 @@
 
     <aside class="controls-panel">
       <section class="control-group">
-        <div class="control-group-title">速度</div>
+        <div class="control-group-title" id="speedTitle" data-i18n="speed">Speed</div>
         <div class="mode-selector" id="modeSelector">
-          <button class="mode-btn" data-speed="180">慢速</button>
-          <button class="mode-btn active" data-speed="130">正常</button>
-          <button class="mode-btn" data-speed="90">快速</button>
-          <button class="mode-btn" data-speed="60">极速</button>
+          <button class="mode-btn" type="button" data-speed="180" data-i18n="slow">Slow</button>
+          <button class="mode-btn active" type="button" data-speed="130" data-i18n="normal">Normal</button>
+          <button class="mode-btn" type="button" data-speed="90" data-i18n="fast">Fast</button>
+          <button class="mode-btn" type="button" data-speed="60" data-i18n="extreme">Turbo</button>
         </div>
       </section>
 
       <section class="control-group">
-        <div class="control-group-title">背景色</div>
+        <div class="control-group-title" id="bgTitle" data-i18n="background">Background</div>
         <div class="color-swatches" id="colorSwatches">
-          <div class="swatch active" data-color="#0b0b0b" style="background:#0b0b0b;" title="经典黑"></div>
-          <div class="swatch" data-color="#08131f" style="background:#08131f;" title="深邃蓝"></div>
-          <div class="swatch" data-color="#071a10" style="background:#071a10;" title="暗夜绿"></div>
-          <div class="swatch" data-color="#150c1f" style="background:#150c1f;" title="神秘紫"></div>
-          <div class="swatch" data-color="#17191b" style="background:#17191b;" title="石墨灰"></div>
-          <div class="swatch" data-color="#0d1b26" style="background:#0d1b26;" title="深海蓝"></div>
-          <div class="swatch" data-color="#200d0d" style="background:#200d0d;" title="暗红褐"></div>
-          <div class="swatch" data-color="#0d2016" style="background:#0d2016;" title="丛林绿"></div>
-          <div class="swatch" data-color="#221708" style="background:#221708;" title="古铜色"></div>
+          <button class="swatch active" type="button" data-color="#0b0b0b" style="background:#0b0b0b;" data-i18n-aria="colorClassic" aria-label="Classic black" aria-pressed="true"></button>
+          <button class="swatch" type="button" data-color="#08131f" style="background:#08131f;" data-i18n-aria="colorDeepBlue" aria-label="Deep blue" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-color="#071a10" style="background:#071a10;" data-i18n-aria="colorNightGreen" aria-label="Night green" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-color="#150c1f" style="background:#150c1f;" data-i18n-aria="colorMystic" aria-label="Mystic purple" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-color="#17191b" style="background:#17191b;" data-i18n-aria="colorGraphite" aria-label="Graphite" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-color="#0d1b26" style="background:#0d1b26;" data-i18n-aria="colorOcean" aria-label="Ocean blue" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-color="#200d0d" style="background:#200d0d;" data-i18n-aria="colorDarkRed" aria-label="Dark red" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-color="#0d2016" style="background:#0d2016;" data-i18n-aria="colorJungle" aria-label="Jungle green" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-color="#221708" style="background:#221708;" data-i18n-aria="colorBronze" aria-label="Bronze" aria-pressed="false"></button>
         </div>
       </section>
 
       <section class="control-group button-group">
-        <button class="action-btn primary" id="restartBtn">开始游戏</button>
-        <button class="action-btn secondary" id="pauseBtn" disabled>
+        <button class="action-btn primary" id="restartBtn" type="button" data-i18n="start">Start</button>
+        <button class="action-btn secondary" id="pauseBtn" type="button" disabled>
           <span class="btn-icon icon-pause"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></span>
           <span class="btn-icon icon-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
-          <span class="btn-label">暂停</span>
+          <span class="btn-label" data-i18n="pause">Pause</span>
         </button>
-        <button class="action-btn ghost" id="toggleDpadBtn">显示方向键</button>
+        <button class="action-btn ghost" id="toggleDpadBtn" type="button" aria-pressed="false" data-i18n-aria="showDpad" aria-label="Show D-pad">
+          <span class="when-off"><span class="lbl-full" data-i18n="showDpad">Show D-pad</span><span class="lbl-tiny" data-i18n="showDpadShort">D-pad</span></span>
+          <span class="when-on"><span class="lbl-full" data-i18n="hideDpad">Hide D-pad</span><span class="lbl-tiny" data-i18n="hideDpadShort">Hide</span></span>
+        </button>
       </section>
 
       <p class="hint-text" id="hint"></p>
     </aside>
-  </main>
+  </div>
 </div>
 <script src="js/config.js"></script>
+<script src="locales/af-ZA.js"></script>
+<script src="locales/ar-EG.js"></script>
+<script src="locales/ar-SA.js"></script>
+<script src="locales/bg-BG.js"></script>
+<script src="locales/bn-BD.js"></script>
+<script src="locales/ca-ES.js"></script>
+<script src="locales/cs-CZ.js"></script>
+<script src="locales/da-DK.js"></script>
+<script src="locales/de-AT.js"></script>
+<script src="locales/de-CH.js"></script>
+<script src="locales/de-DE.js"></script>
+<script src="locales/el-GR.js"></script>
+<script src="locales/en-AU.js"></script>
+<script src="locales/en-CA.js"></script>
+<script src="locales/en-GB.js"></script>
+<script src="locales/en-US.js"></script>
+<script src="locales/es-AR.js"></script>
+<script src="locales/es-ES.js"></script>
+<script src="locales/es-MX.js"></script>
+<script src="locales/et-EE.js"></script>
+<script src="locales/fa-IR.js"></script>
+<script src="locales/fi-FI.js"></script>
+<script src="locales/fil-PH.js"></script>
+<script src="locales/fr-BE.js"></script>
+<script src="locales/fr-CA.js"></script>
+<script src="locales/fr-CH.js"></script>
+<script src="locales/fr-FR.js"></script>
+<script src="locales/gl-ES.js"></script>
+<script src="locales/he-IL.js"></script>
+<script src="locales/hi-IN.js"></script>
+<script src="locales/hr-HR.js"></script>
+<script src="locales/hu-HU.js"></script>
+<script src="locales/id-ID.js"></script>
+<script src="locales/it-IT.js"></script>
+<script src="locales/ja-JP.js"></script>
+<script src="locales/ko-KR.js"></script>
+<script src="locales/lt-LT.js"></script>
+<script src="locales/lv-LV.js"></script>
+<script src="locales/mr-IN.js"></script>
+<script src="locales/ms-MY.js"></script>
+<script src="locales/nb-NO.js"></script>
+<script src="locales/nl-BE.js"></script>
+<script src="locales/nl-NL.js"></script>
+<script src="locales/nn-NO.js"></script>
+<script src="locales/pl-PL.js"></script>
+<script src="locales/pt-BR.js"></script>
+<script src="locales/pt-PT.js"></script>
+<script src="locales/ro-RO.js"></script>
+<script src="locales/ru-RU.js"></script>
+<script src="locales/sk-SK.js"></script>
+<script src="locales/sl-SI.js"></script>
+<script src="locales/sr-Cyrl.js"></script>
+<script src="locales/sr-Latn.js"></script>
+<script src="locales/sv-SE.js"></script>
+<script src="locales/sw-KE.js"></script>
+<script src="locales/ta-IN.js"></script>
+<script src="locales/te-IN.js"></script>
+<script src="locales/th-TH.js"></script>
+<script src="locales/tr-TR.js"></script>
+<script src="locales/uk-UA.js"></script>
+<script src="locales/ur-PK.js"></script>
+<script src="locales/vi-VN.js"></script>
+<script src="locales/zh-CN.js"></script>
+<script src="locales/zh-HK.js"></script>
+<script src="locales/zh-MO.js"></script>
+<script src="locales/zh-TW.js"></script>
+<script src="js/i18n.js"></script>
 <script src="js/state.js"></script>
 <script src="js/renderer.js"></script>
 <script src="js/input.js"></script>

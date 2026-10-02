@@ -1,11 +1,14 @@
+const BEST_SCORE_KEY = '2048_best_score';
+
 let gameOver = false;
-let historyMax = 0;
 let winNotified = false;
 let dialogOpen = false;
 
-const maxValueEl = document.getElementById('maxValue');
+const scoreValueEl = document.getElementById('scoreValue');
+const bestValueEl = document.getElementById('bestValue');
 const winModal = document.getElementById('winModal');
 const gameOverModal = document.getElementById('gameOverModal');
+const liveRegion = document.getElementById('liveRegion');
 
 function hideAllDialogs() {
     winModal.style.display = 'none';
@@ -16,25 +19,52 @@ function hideAllDialogs() {
 function showWinDialog() {
     dialogOpen = true;
     winModal.style.display = 'flex';
+    announce('恭喜！你达到了2048！');
 }
 
 function showGameOverDialog() {
     dialogOpen = true;
     gameOverModal.style.display = 'flex';
+    announce('游戏结束，没有可移动的格子了');
 }
 
-function loadHistoryMax() {
-    const saved = localStorage.getItem('2048_max');
-    historyMax = saved ? parseInt(saved) : 0;
-    maxValueEl.textContent = historyMax;
+function announce(message) {
+    liveRegion.textContent = message;
 }
 
-function saveHistoryMax(value) {
-    if (value > historyMax) {
-        historyMax = value;
-        localStorage.setItem('2048_max', historyMax);
-        maxValueEl.textContent = historyMax;
+function loadBestScore() {
+    try {
+        const saved = localStorage.getItem(BEST_SCORE_KEY);
+        const parsed = saved ? parseInt(saved, 10) : 0;
+        return Number.isFinite(parsed) ? parsed : 0;
+    } catch (error) {
+        return 0;
     }
+}
+
+function persistBestScore(value) {
+    try {
+        localStorage.setItem(BEST_SCORE_KEY, String(value));
+    } catch (error) {
+        return;
+    }
+}
+
+function updateScoreDisplay(scoreValue, bestValue) {
+    scoreValueEl.textContent = scoreValue;
+    bestValueEl.textContent = bestValue;
+    scoreValueEl.classList.remove('score-pulse');
+    void scoreValueEl.offsetWidth;
+    scoreValueEl.classList.add('score-pulse');
+}
+
+function showScoreGain(amount) {
+    const box = scoreValueEl.closest('.score-box');
+    const indicator = document.createElement('div');
+    indicator.className = 'score-gain';
+    indicator.textContent = `+${amount}`;
+    box.appendChild(indicator);
+    indicator.addEventListener('animationend', () => indicator.remove());
 }
 
 let touchStartX = 0;
@@ -73,7 +103,7 @@ function initTouchSupport() {
 function initEventListeners() {
     document.getElementById('continueBtn').addEventListener('click', () => {
         hideAllDialogs();
-        if (!gameOver && isGameOver(board)) {
+        if (!gameOver && isGameOver(buildValueGrid(tiles))) {
             gameOver = true;
             showGameOverDialog();
         }
@@ -105,6 +135,12 @@ function initEventListeners() {
         else if (key === 'ArrowDown' || key === 's' || key === 'S') { e.preventDefault(); move('down'); }
         else if (key === 'ArrowLeft' || key === 'a' || key === 'A') { e.preventDefault(); move('left'); }
         else if (key === 'ArrowRight' || key === 'd' || key === 'D') { e.preventDefault(); move('right'); }
+    });
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(repositionAllTiles, 150);
     });
 
     initTouchSupport();

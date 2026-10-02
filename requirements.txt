@@ -4,4 +4,3 @@ httpx
 qrcode
 pillow
 pydantic
-requests
