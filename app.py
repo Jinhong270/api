@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.security import APIKeyQuery
 from starlette.staticfiles import StaticFiles
 from starlette.types import Scope
@@ -68,6 +68,14 @@ app = FastAPI(title="Docs", docs_url=None, redoc_url=None, openapi_url=None, lif
 
 @app.middleware("http")
 async def add_security_headers(request, call_next):
+    length = request.headers.get("content-length")
+    if length is not None:
+        try:
+            too_big = int(length) > 4 * 1024 * 1024
+        except ValueError:
+            too_big = False
+        if too_big:
+            return JSONResponse(status_code=413, content={"detail": "payload too large"})
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
