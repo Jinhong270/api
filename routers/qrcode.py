@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from qrcode.exceptions import DataOverflowError
 
 router = APIRouter(prefix="/qrcode", tags=["QR Code"])
+_QR_MAX_CHARS = 7089
 
 
 class QRCodeRequest(BaseModel):
@@ -31,9 +32,15 @@ def _generate_qrcode_bytes(text: str) -> bytes:
 
 
 async def _qr_bytes(text: str) -> bytes:
+    if len(text) > _QR_MAX_CHARS:
+        raise HTTPException(status_code=400, detail="text is too long")
     try:
         return await asyncio.to_thread(_generate_qrcode_bytes, text)
     except DataOverflowError:
+        raise HTTPException(status_code=400, detail="text is too long")
+    except ValueError as exc:
+        if "version" not in str(exc).lower():
+            raise HTTPException(status_code=500, detail="failed to generate qrcode")
         raise HTTPException(status_code=400, detail="text is too long")
     except Exception:
         raise HTTPException(status_code=500, detail="failed to generate qrcode")
