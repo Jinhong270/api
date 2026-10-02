@@ -1,4 +1,3 @@
 createGridCells();
-loadHistoryMax();
 initBoard();
 initEventListeners();

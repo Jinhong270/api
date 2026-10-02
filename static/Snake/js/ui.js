@@ -19,11 +19,12 @@ function setupModeButtons(){
   modeButtons.forEach(function(btn){
     btn.addEventListener('click', function(){
       if(Game.state === 'playing'){
-        showToast('游戏进行中无法切换速度');
+        showToast(t('toastSpeed'));
         return;
       }
       var speed = parseInt(btn.dataset.speed, 10);
-      setSpeed(speed);
+      setSpeed(speed, true);
+      if(isTouchDevice) btn.blur();
     });
   });
 }
@@ -31,40 +32,112 @@ function setupModeButtons(){
 function setupSwatches(){
   swatchEls.forEach(function(swatch){
     swatch.addEventListener('click', function(){
-      Game.bgColor = swatch.dataset.color;
-      swatchEls.forEach(function(s){
-        s.classList.toggle('active', s === swatch);
-      });
+      setBgColor(swatch.dataset.color, true);
+      if(isTouchDevice) swatch.blur();
     });
   });
 }
 
+function applyDpadVisible(showing, persist){
+  dpadEl.classList.toggle('visible', showing);
+  appEl.classList.toggle('dpad-on', showing);
+  stageEl.classList.toggle('with-dpad', showing);
+  toggleDpadBtn.setAttribute('aria-pressed', showing ? 'true' : 'false');
+  toggleDpadBtn.setAttribute('aria-label', showing ? t('hideDpad') : t('showDpad'));
+  if(persist) saveSettings({dpad: showing});
+  scheduleResize();
+}
+
+function initDpadVisibility(){
+  var showing = Game.dpadPreference === null ? !!isTouchDevice : Game.dpadPreference;
+  applyDpadVisible(showing, false);
+}
+
 function setupButtons(){
-  startBtn.addEventListener('click', startGame);
-  restartFromOverBtn.addEventListener('click', startGame);
-  restartBtn.addEventListener('click', startGame);
+  startBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    startGame();
+  });
+  restartFromOverBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    startGame();
+  });
+  restartBtn.addEventListener('click', function(){
+    startGame();
+    if(isTouchDevice) restartBtn.blur();
+  });
   pauseBtn.addEventListener('click', function(){
     if(Game.state === 'playing') setGameState('paused');
     else if(Game.state === 'paused') setGameState('playing');
+    if(isTouchDevice) pauseBtn.blur();
   });
   toggleDpadBtn.addEventListener('click', function(){
-    var showing = dpadEl.classList.toggle('visible');
-    toggleDpadBtn.textContent = showing ? '隐藏方向键' : '显示方向键';
-    resizeCanvas();
+    applyDpadVisible(!dpadEl.classList.contains('visible'), true);
+    if(isTouchDevice) toggleDpadBtn.blur();
   });
 }
 
 function setupHint(){
-  hintEl.textContent = isTouchDevice
-    ? '滑动屏幕或使用方向键控制 · 点击画布暂停/继续'
-    : '方向键 / WASD 移动 · 空格键开始/暂停/继续 · 点击画布暂停';
+  var canFull = fullscreenBtn && !fullscreenBtn.hidden;
+  if(isTouchDevice){
+    hintEl.textContent = t('hintTouch');
+    idleHintEl.textContent = t('idleHintTouch');
+    pausedHintEl.textContent = t('pausedHintTouch');
+  }else{
+    hintEl.textContent = canFull ? t('hintDesktopFull') : t('hintDesktop');
+    idleHintEl.textContent = t('idleHintDesktop');
+    pausedHintEl.textContent = t('pausedHintDesktop');
+  }
 }
 
-function initDpadVisibility(){
-  if(isTouchDevice){
-    dpadEl.classList.add('visible');
-    toggleDpadBtn.textContent = '隐藏方向键';
-  }else{
-    toggleDpadBtn.textContent = '显示方向键';
+function fullscreenSupported(){
+  var el = document.documentElement;
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if(!req) return false;
+  if(document.fullscreenEnabled === false || document.webkitFullscreenEnabled === false) return false;
+  return true;
+}
+
+function toggleFullscreen(){
+  var el = document.documentElement;
+  if(document.fullscreenElement || document.webkitFullscreenElement){
+    var exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if(exit) exit.call(document);
+    return;
   }
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if(!req) return;
+  var result = req.call(el);
+  if(result && result.catch) result.catch(function(){});
+}
+
+function syncFullscreenIcon(){
+  var on = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  fullscreenBtn.classList.toggle('is-active', on);
+  fullscreenBtn.setAttribute('aria-label', on ? t('exitFullscreen') : t('fullscreen'));
+}
+
+function setupFullscreen(){
+  if(!fullscreenSupported()) return;
+  fullscreenBtn.hidden = false;
+  fullscreenBtn.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', function(){
+    syncFullscreenIcon();
+    scheduleResize();
+  });
+  document.addEventListener('webkitfullscreenchange', function(){
+    syncFullscreenIcon();
+    scheduleResize();
+  });
+}
+
+function setupVisibility(){
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      if(Game.state === 'playing') setGameState('paused');
+      return;
+    }
+    syncWakeLock();
+    syncAppViewport();
+  });
 }

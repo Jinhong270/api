@@ -1,0 +1,111 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+}
+
+.title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.title {
+    font-size: 44px;
+    font-weight: 800;
+    color: var(--color-text-dark);
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+.subtitle {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-dark);
+    opacity: 0.65;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.score-box {
+    position: relative;
+    background: var(--color-board);
+    color: var(--color-text-light);
+    padding: 8px 22px;
+    border-radius: var(--radius-md);
+    min-width: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.3;
+}
+
+.score-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    opacity: 0.75;
+}
+
+.score-value {
+    font-size: 24px;
+    font-weight: 800;
+    display: inline-block;
+}
+
+.score-pulse {
+    animation: scorePulse 220ms ease-out;
+}
+
+@keyframes scorePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.22); }
+    100% { transform: scale(1); }
+}
+
+.score-gain {
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    color: var(--color-accent);
+    font-weight: 800;
+    font-size: 15px;
+    pointer-events: none;
+    animation: scoreGainFloat 700ms ease-out forwards;
+}
+
+@keyframes scoreGainFloat {
+    0% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -28px); }
+}
+
+.reset-btn {
+    background: var(--color-accent);
+    color: var(--color-text-light);
+    padding: 12px 26px;
+    border: none;
+    border-radius: var(--radius-pill);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--shadow-lift);
+    transition: background 0.2s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.reset-btn:hover {
+    background: var(--color-accent-hover);
+}
+
+.reset-btn:active {
+    transform: scale(0.95);
+}

@@ -1,11 +1,10 @@
 fastapi
-uvicorn
+uvicorn[standard]
 httpx
 qrcode
 pillow
 pydantic
-requests
+typing_extensions
 loguru
 jinja2
 playwright
-typing_extensions

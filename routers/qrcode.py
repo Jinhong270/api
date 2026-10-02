@@ -1,60 +1,61 @@
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import PlainTextResponse, Response
-from pydantic import BaseModel
-import qrcode
+import asyncio
 import base64
 from io import BytesIO
 
+import qrcode
+from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import PlainTextResponse, Response
+from pydantic import BaseModel
+from qrcode.exceptions import DataOverflowError
+
 router = APIRouter(prefix="/qrcode", tags=["QR Code"])
+
 
 class QRCodeRequest(BaseModel):
     text: str
 
-def _generate_qrcode_image(text: str) -> BytesIO:
-    qr = qrcode.QRCode(
+
+def _generate_qrcode_bytes(text: str) -> bytes:
+    image = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=10,
         border=4,
     )
-    qr.add_data(text)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
-    return buf
+    image.add_data(text)
+    image.make(fit=True)
+    rendered = image.make_image(fill_color="black", back_color="white")
+    buffer = BytesIO()
+    rendered.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+async def _qr_bytes(text: str) -> bytes:
+    try:
+        return await asyncio.to_thread(_generate_qrcode_bytes, text)
+    except DataOverflowError:
+        raise HTTPException(status_code=400, detail="text is too long")
+    except Exception:
+        raise HTTPException(status_code=500, detail="failed to generate qrcode")
+
 
 @router.get("", response_class=Response)
 async def get_qrcode_image(text: str = Query(...)):
-    try:
-        buf = _generate_qrcode_image(text)
-        return Response(content=buf.getvalue(), media_type="image/png")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return Response(content=await _qr_bytes(text), media_type="image/png")
+
 
 @router.get("/base64", response_class=PlainTextResponse)
 async def get_qrcode_base64(text: str = Query(...)):
-    try:
-        buf = _generate_qrcode_image(text)
-        img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-        return f"data:image/png;base64,{img_base64}"
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    encoded = base64.b64encode(await _qr_bytes(text)).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
 
 @router.post("", response_class=Response)
 async def post_qrcode_image(request: QRCodeRequest):
-    try:
-        buf = _generate_qrcode_image(request.text)
-        return Response(content=buf.getvalue(), media_type="image/png")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return Response(content=await _qr_bytes(request.text), media_type="image/png")
+
 
 @router.post("/base64", response_class=PlainTextResponse)
 async def post_qrcode_base64(request: QRCodeRequest):
-    try:
-        buf = _generate_qrcode_image(request.text)
-        img_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-        return f"data:image/png;base64,{img_base64}"
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    encoded = base64.b64encode(await _qr_bytes(request.text)).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
